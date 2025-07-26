@@ -1,0 +1,1025 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Game Boy Color </title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: linear-gradient(135deg, #8B4A9C 0%, #6B3A7C 50%, #4A2A5C 100%);
+            height: 100vh;
+            width: 100vw;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .header {
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            background: linear-gradient(135deg, #9B5AAC, #7B4A8C);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            position: relative;
+        }
+
+        .nintendo-logo {
+            color: #2a2a2a;
+            font-size: 16px;
+            font-weight: bold;
+            text-shadow: 0 1px 2px rgba(255,255,255,0.3);
+            letter-spacing: 1px;
+        }
+
+        .power-indicator {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #2a2a2a;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .power-led {
+            width: 12px;
+            height: 12px;
+            background: #44ff44;
+            border-radius: 50%;
+            box-shadow: 0 0 15px #44ff44;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(1.1); }
+        }
+
+        .screen-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            background: linear-gradient(135deg, #7B4A8C, #5B3A6C);
+        }
+
+        .screen-bezel {
+            flex: 1;
+            background: linear-gradient(145deg, #2a2a2a, #1a1a1a);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 
+                inset 0 5px 15px rgba(0,0,0,0.5),
+                0 5px 15px rgba(0,0,0,0.3);
+            position: relative;
+        }
+
+        .screen {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #9BBB58, #8BAA48);
+            border-radius: 15px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 
+                inset 0 3px 6px rgba(0,0,0,0.3),
+                0 2px 4px rgba(255,255,255,0.1);
+        }
+
+        .screen-content {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 2px,
+                rgba(0,0,0,0.05) 2px,
+                rgba(0,0,0,0.05) 4px
+            );
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 30px;
+            color: #2d4a2d;
+            font-weight: bold;
+            text-align: center;
+            font-size: 18px;
+            line-height: 1.4;
+        }
+
+        .photo-display {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .photo-container {
+            max-width: 90%;
+            max-height: 70%;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            margin-bottom: 15px;
+            position: relative;
+        }
+
+        .photo-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            /* Filtro para simular tela do Game Boy Color */
+            filter: 
+                contrast(1.2) 
+                brightness(0.9) 
+                saturate(0.8) 
+                sepia(0.1);
+            /* Efeito de pixelização sutil */
+            image-rendering: pixelated;
+            image-rendering: -moz-crisp-edges;
+            image-rendering: crisp-edges;
+        }
+
+        /* Overlay para simular linhas de varredura da tela LCD */
+        .photo-container::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 2px,
+                rgba(45, 74, 45, 0.1) 2px,
+                rgba(45, 74, 45, 0.1) 4px
+            );
+            pointer-events: none;
+            border-radius: 10px;
+        }
+
+        /* Efeito de brilho da tela nas imagens */
+        .photo-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                135deg,
+                rgba(155, 187, 88, 0.1) 0%,
+                transparent 50%,
+                rgba(139, 170, 72, 0.05) 100%
+            );
+            pointer-events: none;
+            border-radius: 10px;
+            z-index: 1;
+        }
+
+        .photo-title {
+            font-size: 14px;
+            color: #2d4a2d;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .photo-controls {
+            font-size: 10px;
+            color: #2d4a2d;
+            opacity: 0.8;
+            text-align: center;
+        }
+
+        .error-message {
+            color: #8B4A9C;
+            font-size: 12px;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .game-boy-label {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #2a2a2a;
+            font-size: 14px;
+            font-weight: bold;
+            text-shadow: 0 1px 2px rgba(255,255,255,0.3);
+            letter-spacing: 2px;
+            text-align: center;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .controls-area {
+            height: 200px;
+            background: linear-gradient(135deg, #8B4A9C, #6B3A7C);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px 30px;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.3);
+        }
+
+        .dpad-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .dpad {
+            width: 100px;
+            height: 100px;
+            position: relative;
+        }
+
+        .dpad-button {
+            position: absolute;
+            background: linear-gradient(145deg, #4a4a4a, #2a2a2a);
+            border: none;
+            cursor: pointer;
+            transition: all 0.1s;
+            box-shadow: 
+                0 4px 8px rgba(0,0,0,0.3),
+                inset 0 1px 2px rgba(255,255,255,0.2);
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .dpad-button:active {
+            transform: translateY(2px);
+            box-shadow: 
+                0 2px 4px rgba(0,0,0,0.3),
+                inset 0 1px 2px rgba(255,255,255,0.2);
+        }
+
+        .dpad-up, .dpad-down {
+            width: 35px;
+            height: 45px;
+            left: 32.5px;
+            border-radius: 8px;
+        }
+
+        .dpad-up { 
+            top: 0; 
+            background: linear-gradient(145deg, #5a5a5a, #3a3a3a);
+        }
+        .dpad-down { 
+            bottom: 0; 
+            background: linear-gradient(145deg, #5a5a5a, #3a3a3a);
+        }
+
+        .dpad-left, .dpad-right {
+            width: 45px;
+            height: 35px;
+            top: 32.5px;
+            border-radius: 8px;
+        }
+
+        .dpad-left { 
+            left: 0; 
+            background: linear-gradient(145deg, #5a5a5a, #3a3a3a);
+        }
+        .dpad-right { 
+            right: 0; 
+            background: linear-gradient(145deg, #5a5a5a, #3a3a3a);
+        }
+
+        .dpad-center {
+            width: 35px;
+            height: 35px;
+            top: 32.5px;
+            left: 32.5px;
+            border-radius: 6px;
+            background: linear-gradient(145deg, #3a3a3a, #2a2a2a);
+            position: absolute;
+        }
+
+        .action-buttons {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .action-button-group {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .action-button {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(145deg, #6a6a6a, #4a4a4a);
+            border: none;
+            cursor: pointer;
+            transition: all 0.1s;
+            box-shadow: 
+                0 5px 10px rgba(0,0,0,0.3),
+                inset 0 2px 4px rgba(255,255,255,0.2);
+            color: white;
+            font-size: 20px;
+            font-weight: bold;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+        }
+
+        .action-button:active {
+            transform: translateY(2px);
+            box-shadow: 
+                0 3px 6px rgba(0,0,0,0.3),
+                inset 0 2px 4px rgba(255,255,255,0.2);
+        }
+
+        .btn-a {
+            background: linear-gradient(145deg, #ff6b6b, #e55555);
+        }
+
+        .btn-b {
+            background: linear-gradient(145deg, #4ecdc4, #3bb3ac);
+        }
+
+        .system-buttons {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 40px;
+        }
+
+        .system-button {
+            width: 60px;
+            height: 25px;
+            background: linear-gradient(145deg, #4a4a4a, #2a2a2a);
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.1s;
+            box-shadow: 
+                0 3px 6px rgba(0,0,0,0.3),
+                inset 0 1px 2px rgba(255,255,255,0.2);
+            color: white;
+            font-size: 10px;
+            font-weight: bold;
+        }
+
+        .system-button:active {
+            transform: translateY(1px);
+            box-shadow: 
+                0 2px 4px rgba(0,0,0,0.3),
+                inset 0 1px 2px rgba(255,255,255,0.2);
+        }
+
+        .button-label {
+            color: #2a2a2a;
+            font-size: 10px;
+            font-weight: bold;
+            text-shadow: 0 1px 1px rgba(255,255,255,0.3);
+            margin-top: 5px;
+        }
+
+        .game-display {
+            animation: screenGlow 2s infinite alternate;
+        }
+
+        @keyframes screenGlow {
+            0% { text-shadow: 0 0 5px rgba(45, 74, 45, 0.5); }
+            100% { text-shadow: 0 0 10px rgba(45, 74, 45, 0.8); }
+        }
+
+        .menu-item {
+            margin: 8px 0;
+            padding: 5px 10px;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+
+        .menu-item.selected {
+            background: rgba(45, 74, 45, 0.3);
+            transform: scale(1.05);
+        }
+
+        .pixel-art {
+            font-family: monospace;
+            font-size: 12px;
+            line-height: 1;
+            white-space: pre;
+        }
+
+        /* Estilos para o campo minado */
+        .minesweeper-grid {
+            display: grid;
+            gap: 1px;
+            justify-content: center;
+            margin: 10px 0;
+            background: #2d4a2d;
+            padding: 3px;
+            border-radius: 4px;
+        }
+
+        .mine-cell {
+            width: 28px;
+            height: 28px;
+            background: #ffffff;
+            border: 2px solid #cccccc;
+            border-radius: 2px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: bold;
+            color: #2d4a2d;
+            transition: all 0.1s;
+            font-family: 'Courier New', monospace;
+            box-shadow: 
+                inset 1px 1px 0 rgba(255,255,255,0.8),
+                inset -1px -1px 0 rgba(0,0,0,0.2);
+        }
+
+        .mine-cell:hover {
+            background: #f0f0f0;
+            border-color: #aaaaaa;
+        }
+
+        .mine-cell.selected {
+            background: #ffff99;
+            border: 3px solid #2d4a2d;
+            border-radius: 3px;
+            box-shadow: 
+                0 0 0 1px #ffffff,
+                inset 0 0 8px rgba(45, 74, 45, 0.3);
+            transform: scale(1.05);
+        }
+
+        .mine-cell.revealed {
+            background: #e0e0e0;
+            border: 1px solid #999999;
+            box-shadow: 
+                inset 1px 1px 2px rgba(0,0,0,0.3);
+        }
+
+        .mine-cell.flagged {
+            background: #ff6666;
+            border: 2px solid #cc4444;
+            color: white;
+            text-shadow: 1px 1px 1px rgba(0,0,0,0.5);
+        }
+
+        .mine-cell.mine {
+            background: #ff4444;
+            border: 2px solid #cc2222;
+            color: white;
+            text-shadow: 1px 1px 1px rgba(0,0,0,0.8);
+        }
+
+        .mine-cell.number-1 { color: #0000ff; }
+        .mine-cell.number-2 { color: #008000; }
+        .mine-cell.number-3 { color: #ff0000; }
+        .mine-cell.number-4 { color: #000080; }
+        .mine-cell.number-5 { color: #800000; }
+        .mine-cell.number-6 { color: #008080; }
+        .mine-cell.number-7 { color: #000000; }
+        .mine-cell.number-8 { color: #808080; }
+
+        .victory-message {
+            text-align: center;
+            animation: victoryGlow 1s infinite alternate;
+        }
+
+        @keyframes victoryGlow {
+            0% { text-shadow: 0 0 10px rgba(45, 74, 45, 0.8); }
+            100% { text-shadow: 0 0 20px rgba(45, 74, 45, 1); }
+        }
+
+        .surprise-image {
+            max-width: 80%;
+            max-height: 60%;
+            border-radius: 10px;
+            margin: 10px 0;
+            /* Aplicar o mesmo filtro das outras imagens */
+            filter: 
+                contrast(1.2) 
+                brightness(0.9) 
+                saturate(0.8) 
+                sepia(0.1);
+            image-rendering: pixelated;
+            image-rendering: -moz-crisp-edges;
+            image-rendering: crisp-edges;
+        }
+
+        @media (max-height: 600px) {
+            .header { height: 40px; }
+            .controls-area { height: 160px; }
+            .screen-content { font-size: 16px; padding: 20px; }
+            .dpad { width: 80px; height: 80px; }
+            .action-button { width: 50px; height: 50px; font-size: 18px; }
+            .mine-cell { width: 20px; height: 20px; font-size: 10px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="nintendo-logo">NINTENDO</div>
+        <div class="power-indicator">
+            <div class="power-led"></div>
+            <span>POWER</span>
+        </div>
+    </div>
+
+    <div class="screen-container">
+        <div class="screen-bezel">
+            <div class="screen">
+                <div class="screen-content">
+                    <div class="game-display" id="display">
+                        <div style="font-size: 24px; margin-bottom: 20px;">GAME BOY</div>
+                        <div style="font-size: 20px; margin-bottom: 30px;">COLOR</div>
+                        <div style="font-size: 14px; opacity: 0.8;">Pressione START para começar</div>
+                    </div>
+                </div>
+            </div>
+            <div class="game-boy-label">Game Boy COLOR</div>
+        </div>
+    </div>
+
+    <div class="controls-area">
+        <div class="dpad-container">
+            <div class="dpad">
+                <button class="dpad-button dpad-up" data-key="up">▲</button>
+                <button class="dpad-button dpad-down" data-key="down">▼</button>
+                <button class="dpad-button dpad-left" data-key="left">◄</button>
+                <button class="dpad-button dpad-right" data-key="right">►</button>
+                <div class="dpad-center"></div>
+            </div>
+            <div class="button-label">D-PAD</div>
+        </div>
+
+        <div class="action-buttons">
+            <div class="action-button-group">
+                <button class="action-button btn-b" data-key="b">B</button>
+                <button class="action-button btn-a" data-key="a">A</button>
+            </div>
+            <div class="button-label">ACTION</div>
+        </div>
+
+        <div class="system-buttons">
+            <button class="system-button" data-key="select">SELECT</button>
+            <button class="system-button" data-key="start">START</button>
+        </div>
+    </div>
+
+    <script>
+        const display = document.getElementById('display');
+        const buttons = document.querySelectorAll('button[data-key]');
+        
+        let gameState = 'menu';
+        let selectedOption = 0;
+        let currentPhoto = '';
+        let minesweeperGame = null;
+        
+        const menuItems = [
+            'INICIO',
+            'ASTRO', 
+            'TRIDENTE',
+            'ULTRA-LEVE',
+            'SURPRESA',
+            'CONFIGURAÇÕES'
+        ];
+        
+        const photos = {
+            'INICIO': {
+                title: 'INICIO',
+                filename: 'tetris-deluxe.png',
+                description: 'Uma memória especial ❤️'
+            },
+            'ASTRO': {
+                title: 'Astro',
+                filename: 'astro.png',
+                description: 'Momentos estelares ⭐'
+            },
+            'TRIDENTE': {
+                title: 'Tridente',
+                filename: 'tridente.png',
+                description: 'Força e determinação 🔱'
+            },
+            'ULTRA-LEVE': {
+                title: 'Ultra-Leve',
+                filename: 'ultra-leve.png',
+                description: 'Liberdade nas alturas ✈️'
+            },
+            'SURPRESA': {
+                title: 'Surpresa',
+                type: 'minesweeper',
+                description: 'Encontre todas as minas! 💣'
+            },
+            'CONFIGURAÇÕES': {
+                title: 'CONFIGURAÇÕES',
+                content: `<div style="font-size: 14px; text-align: left;">
+    ⚙️ CONFIGURAÇÕES ⚙️<br><br>
+    
+    CONTRASTE: ████████░░<br>
+    BRILHO: ██████████<br>
+    VIBRAÇÃO: LIGADA<br>
+    IDIOMA: PORTUGUÊS<br><br>
+    
+    SOBRE:<br>
+    Game Boy Color<br>
+    Álbum de Fotos<br>
+    Versão: 1.0<br><br>
+    
+    <span style="font-size: 10px;">B: Voltar ao menu</span>
+</div>`
+            }
+        };
+
+        // Classe para o jogo Campo Minado
+        class Minesweeper {
+            constructor() {
+                this.width = 8;
+                this.height = 6;
+                this.mineCount = 8;
+                this.grid = [];
+                this.revealed = [];
+                this.flagged = [];
+                this.gameOver = false;
+                this.won = false;
+                this.selectedX = 0;
+                this.selectedY = 0;
+                this.init();
+            }
+
+            init() {
+                // Inicializar grids
+                this.grid = Array(this.height).fill().map(() => Array(this.width).fill(0));
+                this.revealed = Array(this.height).fill().map(() => Array(this.width).fill(false));
+                this.flagged = Array(this.height).fill().map(() => Array(this.width).fill(false));
+                
+                // Colocar minas
+                let minesPlaced = 0;
+                while (minesPlaced < this.mineCount) {
+                    const x = Math.floor(Math.random() * this.width);
+                    const y = Math.floor(Math.random() * this.height);
+                    
+                    if (this.grid[y][x] !== -1) {
+                        this.grid[y][x] = -1; // -1 representa uma mina
+                        minesPlaced++;
+                    }
+                }
+                
+                // Calcular números
+                for (let y = 0; y < this.height; y++) {
+                    for (let x = 0; x < this.width; x++) {
+                        if (this.grid[y][x] !== -1) {
+                            this.grid[y][x] = this.countAdjacentMines(x, y);
+                        }
+                    }
+                }
+            }
+
+            countAdjacentMines(x, y) {
+                let count = 0;
+                for (let dy = -1; dy <= 1; dy++) {
+                    for (let dx = -1; dx <= 1; dx++) {
+                        const nx = x + dx;
+                        const ny = y + dy;
+                        if (nx >= 0 && nx < this.width && ny >= 0 && ny < this.height) {
+                            if (this.grid[ny][nx] === -1) count++;
+                        }
+                    }
+                }
+                return count;
+            }
+
+            reveal(x, y) {
+                if (this.gameOver || this.revealed[y][x] || this.flagged[y][x]) return;
+                
+                this.revealed[y][x] = true;
+                
+                if (this.grid[y][x] === -1) {
+                    this.gameOver = true;
+                    return;
+                }
+                
+                if (this.grid[y][x] === 0) {
+                    // Revelar células adjacentes se não há minas ao redor
+                    for (let dy = -1; dy <= 1; dy++) {
+                        for (let dx = -1; dx <= 1; dx++) {
+                            const nx = x + dx;
+                            const ny = y + dy;
+                            if (nx >= 0 && nx < this.width && ny >= 0 && ny < this.height) {
+                                this.reveal(nx, ny);
+                            }
+                        }
+                    }
+                }
+                
+                this.checkWin();
+            }
+
+            toggleFlag(x, y) {
+                if (this.gameOver || this.revealed[y][x]) return;
+                this.flagged[y][x] = !this.flagged[y][x];
+            }
+
+            checkWin() {
+                let revealedCount = 0;
+                for (let y = 0; y < this.height; y++) {
+                    for (let x = 0; x < this.width; x++) {
+                        if (this.revealed[y][x]) revealedCount++;
+                    }
+                }
+                
+                if (revealedCount === (this.width * this.height - this.mineCount)) {
+                    this.won = true;
+                    this.gameOver = true;
+                }
+            }
+
+            moveSelection(dx, dy) {
+                this.selectedX = Math.max(0, Math.min(this.width - 1, this.selectedX + dx));
+                this.selectedY = Math.max(0, Math.min(this.height - 1, this.selectedY + dy));
+            }
+
+            render() {
+                if (this.won) {
+                    return `
+                        <div class="victory-message">
+                            <div style="font-size: 16px; margin-bottom: 15px;">🎉 PARABÉNS! 🎉</div>
+                            <div style="font-size: 14px; margin-bottom: 15px;">O primeiro de muitos meses juntos</div>
+                            <img src="surpresa.png" alt="Surpresa" class="surprise-image" 
+                                 onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" />
+                            <div style="display: none; font-size: 12px; color: #8B4A9C;">❌ Imagem surpresa.png não encontrada</div>
+                            <div style="font-size: 10px; margin-top: 15px;">B: Voltar ao menu</div>
+                        </div>
+                    `;
+                }
+
+                let html = `
+                    <div style="font-size: 14px; margin-bottom: 10px;">💣 CAMPO MINADO 💣</div>
+                    <div style="font-size: 10px; margin-bottom: 10px;">Minas: ${this.mineCount} | Use ←→↑↓ para mover</div>
+                    <div class="minesweeper-grid" style="grid-template-columns: repeat(${this.width}, 28px);">
+                `;
+
+                for (let y = 0; y < this.height; y++) {
+                    for (let x = 0; x < this.width; x++) {
+                        let cellClass = 'mine-cell';
+                        let content = '';
+                        
+                        // Adicionar classe de seleção
+                        if (x === this.selectedX && y === this.selectedY) {
+                            cellClass += ' selected';
+                        }
+                        
+                        if (this.flagged[y][x]) {
+                            cellClass += ' flagged';
+                            content = '🚩';
+                        } else if (this.revealed[y][x]) {
+                            cellClass += ' revealed';
+                            if (this.grid[y][x] === -1) {
+                                cellClass += ' mine';
+                                content = '💣';
+                            } else if (this.grid[y][x] > 0) {
+                                cellClass += ` number-${this.grid[y][x]}`;
+                                content = this.grid[y][x];
+                            }
+                        }
+                        
+                        html += `<div class="${cellClass}">${content}</div>`;
+                    }
+                }
+
+                html += `
+                    </div>
+                    <div style="font-size: 9px; margin-top: 10px;">
+                        A: Revelar | B: Bandeira/Voltar<br>
+                        START: Menu
+                    </div>
+                `;
+
+                if (this.gameOver && !this.won) {
+                    html = `
+                        <div style="font-size: 16px; margin-bottom: 15px;">💥 GAME OVER! 💥</div>
+                        <div style="font-size: 12px; margin-bottom: 15px;">Você acertou uma mina!</div>
+                        <div style="font-size: 10px;">A: Tentar novamente | B: Voltar ao menu</div>
+                    `;
+                }
+
+                return html;
+            }
+        }
+        
+        function updateDisplay(content) {
+            display.innerHTML = content;
+        }
+        
+        function showMenu() {
+            let menuHTML = `
+                <div style="font-size: 20px; margin-bottom: 20px;">📸 ÁLBUM DE FOTOS 📸</div>
+                <div style="font-size: 14px; text-align: left;">
+            `;
+            
+            menuItems.forEach((item, index) => {
+                const isSelected = index === selectedOption;
+                menuHTML += `
+                    <div class="menu-item ${isSelected ? 'selected' : ''}">
+                        ${isSelected ? '►' : ' '} ${item}
+                    </div>
+                `;
+            });
+            
+            menuHTML += `
+                </div>
+                <div style="font-size: 10px; margin-top: 20px; opacity: 0.8;">
+                    ↑↓: Navegar • START/A: Selecionar
+                </div>
+            `;
+            
+            updateDisplay(menuHTML);
+        }
+        
+        function showPhoto(photoKey) {
+            const photo = photos[photoKey];
+            
+            if (photoKey === 'CONFIGURAÇÕES') {
+                updateDisplay(photo.content);
+                return;
+            }
+
+            if (photoKey === 'SURPRESA') {
+                minesweeperGame = new Minesweeper();
+                gameState = 'minesweeper';
+                updateDisplay(minesweeperGame.render());
+                return;
+            }
+            
+            const photoHTML = `
+                <div class="photo-display">
+                    <div class="photo-title">${photo.title}</div>
+                    <div class="photo-container">
+                        <img src="${photo.filename}" 
+                             alt="${photo.title}"
+                             onerror="this.parentElement.innerHTML='<div class=&quot;error-message&quot;>❌ Imagem não encontrada<br>${photo.filename}<br><br>Certifique-se de que o arquivo está na raiz do projeto</div>'"
+                        />
+                    </div>
+                    <div class="photo-controls">
+                        ${photo.description}<br><br>
+                        <span style="font-size: 9px;">B: Voltar • START: Menu</span>
+                    </div>
+                </div>
+            `;
+            
+            updateDisplay(photoHTML);
+        }
+        
+        function handleInput(key) {
+            // Vibração no celular
+            if (navigator.vibrate) {
+                navigator.vibrate(50);
+            }
+            
+            if (gameState === 'menu') {
+                switch(key) {
+                    case 'up':
+                        selectedOption = (selectedOption - 1 + menuItems.length) % menuItems.length;
+                        showMenu();
+                        break;
+                    case 'down':
+                        selectedOption = (selectedOption + 1) % menuItems.length;
+                        showMenu();
+                        break;
+                    case 'start':
+                    case 'a':
+                        currentPhoto = menuItems[selectedOption];
+                        gameState = 'photo';
+                        showPhoto(currentPhoto);
+                        break;
+                }
+            } else if (gameState === 'photo') {
+                switch(key) {
+                    case 'b':
+                        gameState = 'menu';
+                        showMenu();
+                        break;
+                    case 'start':
+                        gameState = 'menu';
+                        selectedOption = 0;
+                        showMenu();
+                        break;
+                }
+            } else if (gameState === 'minesweeper') {
+                if (minesweeperGame.won) {
+                    if (key === 'b' || key === 'start') {
+                        gameState = 'menu';
+                        showMenu();
+                    }
+                } else if (minesweeperGame.gameOver) {
+                    if (key === 'a') {
+                        minesweeperGame = new Minesweeper();
+                        updateDisplay(minesweeperGame.render());
+                    } else if (key === 'b' || key === 'start') {
+                        gameState = 'menu';
+                        showMenu();
+                    }
+                } else {
+                    switch(key) {
+                        case 'up':
+                            minesweeperGame.moveSelection(0, -1);
+                            updateDisplay(minesweeperGame.render());
+                            break;
+                        case 'down':
+                            minesweeperGame.moveSelection(0, 1);
+                            updateDisplay(minesweeperGame.render());
+                            break;
+                        case 'left':
+                            minesweeperGame.moveSelection(-1, 0);
+                            updateDisplay(minesweeperGame.render());
+                            break;
+                        case 'right':
+                            minesweeperGame.moveSelection(1, 0);
+                            updateDisplay(minesweeperGame.render());
+                            break;
+                        case 'a':
+                            minesweeperGame.reveal(minesweeperGame.selectedX, minesweeperGame.selectedY);
+                            updateDisplay(minesweeperGame.render());
+                            break;
+                        case 'b':
+                            if (minesweeperGame.selectedX !== undefined) {
+                                minesweeperGame.toggleFlag(minesweeperGame.selectedX, minesweeperGame.selectedY);
+                                updateDisplay(minesweeperGame.render());
+                            } else {
+                                gameState = 'menu';
+                                showMenu();
+                            }
+                            break;
+                        case 'start':
+                            gameState = 'menu';
+                            showMenu();
+                            break;
+                    }
+                }
+            }
+        }
+        
+        // Event listeners para botões
+        buttons.forEach(button => {
+            button.addEventListener('click', () => {
+                const key = button.getAttribute('data-key');
+                handleInput(key);
+            });
+        });
+        
+        // Event listeners para teclado
+        document.addEventListener('keydown', (e) => {
+            const keyMap = {
+                'ArrowUp': 'up',
+                'ArrowDown': 'down',
+                'ArrowLeft': 'left',
+                'ArrowRight': 'right',
+                'KeyA': 'a',
+                'KeyB': 'b',
+                'KeyS': 'start',
+                'Enter': 'start',
+                'Space': 'select'
+            };
+            
+            const key = keyMap[e.code];
+            if (key) {
+                e.preventDefault();
+                handleInput(key);
+            }
+        });
+        
+        // Inicializar o jogo
+        showMenu();
+    </script>
+</body>
+</html>
+
